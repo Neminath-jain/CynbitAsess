@@ -63,8 +63,12 @@
   - `GET /api/v1/reviews/{id}/export` (markdown containing approved comments only).
   - Request correlation with `X-Request-ID` middleware; central safe exception handler with `error_id`.
   - Commit: `feat(api): implement fastapi review endpoints, mentor auth, and markdown export`
-- **Task BC.7 [NEXT]**: Evaluation harness and benchmark runner in `evals/`.
-- **Milestone BC**: Run all tests, lint, audit, generate `docs/reports/PHASE_BC_REPORT.md` (id BC), STOP for approval.
+- **Task BC.7 [COMPLETED]**: Evaluation harness and benchmark runner in `evals/`.
+  - 10 synthetic diffs in `evals/data/`, ground truth labels in `evals/labels.json`.
+  - Benchmark runner in `evals/runner.py` measuring precision/recall, dropped-finding rate, latency, and 100% injection resistance.
+  - Tests in `backend/tests/test_evals.py`.
+  - Commit: `test(evals): implement evaluation dataset and benchmark runner`
+- **Milestone BC [COMPLETED]**: Run all tests (53/53 pass), lint (0 errors), audit (0 vulnerabilities), generated `docs/reports/PHASE_BC_REPORT.md` (id BC).
 
 ---
 
