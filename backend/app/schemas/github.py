@@ -72,3 +72,32 @@ class IngestionPayload(BaseModel):
     @classmethod
     def sanitize_empty_title(cls, v: str) -> str:
         return v if v and v.strip() else "Untitled Pull Request"
+
+
+class FilePatch(BaseModel):
+    """Patch information for a single modified file in a pull request."""
+
+    model_config = ConfigDict(validate_assignment=True)
+
+    filename: str
+    status: str
+    patch: str
+    additions: int = 0
+    deletions: int = 0
+
+
+class PullRequestContext(BaseModel):
+    """Typed pull request context containing metadata, patches, and commit history."""
+
+    model_config = ConfigDict(validate_assignment=True)
+
+    title: str
+    body: str = ""
+    base: str
+    head: str
+    files: list[FilePatch] = Field(default_factory=list)
+    commit_messages: list[str] = Field(default_factory=list)
+    is_fork: bool = False
+    is_truncated: bool = False
+    total_diff_size: int = 0
+
