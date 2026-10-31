@@ -90,3 +90,28 @@ def test_truncation_enforcement() -> None:
     result = sanitizer.sanitize_untrusted_text("a" * 100)
     assert "[TRUNCATED: Exceeded max allowed diff size]" in result
     assert len(result) < 150
+
+
+def test_evidence_check_normalizes_whitespace() -> None:
+    """Verify evidence verification normalizes whitespace differences between quote and diff."""
+    sanitizer = InputSanitizerService()
+    diff = """diff --git a/test.py b/test.py
++    def   calculate(  a,    b  ):
++        return a + b
+"""
+    # Quote has different whitespace formatting
+    finding = Finding(
+        rule_id="STYLE001",
+        severity=CommentSeverity.SUGGESTION,
+        file="test.py",
+        line_start=1,
+        line_end=1,
+        evidence_quote="def calculate( a, b ):",
+        explanation="Whitespace clean-up needed.",
+        suggested_fix="def calculate(a, b):",
+        confidence=0.9,
+    )
+
+    verified = sanitizer.verify_evidence([finding], diff)
+    assert len(verified) == 1
+    assert verified[0].rule_id == "STYLE001"

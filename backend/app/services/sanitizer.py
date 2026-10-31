@@ -58,16 +58,34 @@ class InputSanitizerService:
     def verify_evidence(findings: list[Finding], raw_diff: str) -> list[Finding]:
         """Drop any finding whose evidence_quote does not appear in the raw diff.
 
-        Prevents hallucinated code lines from ever reaching the mentor or intern.
+        Normalizes whitespace on both sides to allow resilient matching while strictly
+        preventing hallucinated code lines from ever reaching the mentor or intern.
         """
         if not raw_diff:
             return []
 
+        def normalize_ws(s: str) -> str:
+            return " ".join(s.split())
+
+        normalized_diff = normalize_ws(raw_diff)
+        diff_lines_normalized = [normalize_ws(line) for line in raw_diff.splitlines() if line.strip()]
+
         verified: list[Finding] = []
         for finding in findings:
             quote = finding.evidence_quote
-            # Check exact presence or stripped line presence in diff
-            if quote in raw_diff or (quote.strip() and quote.strip() in raw_diff):
+            normalized_quote = normalize_ws(quote)
+
+            if not normalized_quote:
+                continue
+
+            # Exact match, normalized full-diff substring, or normalized line substring match
+            is_valid = (
+                quote in raw_diff
+                or normalized_quote in normalized_diff
+                or any(normalized_quote in line for line in diff_lines_normalized)
+            )
+
+            if is_valid:
                 verified.append(finding)
             else:
                 logger.warning(
