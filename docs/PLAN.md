@@ -31,24 +31,28 @@
 
 ---
 
-### Phase B: Backend Core
-- **Task B.1**: Untrusted input sanitizer & prompt injection defense service (`backend/app/services/sanitizer.py`).
-  - Delimiter neutralization, XML envelope formatting, instruction boundary guards.
+### Phase BC: Backend Core & Completion (IN PROGRESS - Combined Phase)
+- **Task BC.1 [COMPLETED]**: Untrusted input sanitizer, XML boundary containment, and evidence verification (`backend/app/services/sanitizer.py`).
+  - Neutralizes `</untrusted_pr_diff>` closing tags; drops findings without matching evidence in diff.
   - Tests in `backend/tests/test_sanitizer.py`.
-  - Proposed Commit: `feat(security): implement untrusted input sanitizer and prompt injection containment`
-- **Task B.2**: LLM client adapter and structured schemas (`backend/app/schemas/llm.py`, `backend/app/adapters/llm_client.py`).
-  - OpenAI-compatible and mock LLM clients, JSON schema enforcement, automatic retry on invalid JSON.
+  - Commit: `feat(security): implement untrusted input sanitizer with evidence check and injection containment`
+- **Task BC.2 [COMPLETED]**: Structured Finding schema & LLM client adapter (`backend/app/schemas/finding.py`, `backend/app/schemas/llm.py`, `backend/app/adapters/llm_client.py`).
+  - Finding schema: rule_id, severity, file, line_start, line_end, evidence_quote, explanation, suggested_fix, confidence.
+  - MockLLMClient quotes real diff lines covering: missing foreign key index, hardcoded secret, unverified JWT, missing tests.
+  - OpenAI-compatible client enabled via LLM_PROVIDER="openai" with mock default.
   - Tests in `backend/tests/test_llm_client.py`.
-  - Proposed Commit: `feat(llm): implement structured LLM client adapter and response schemas`
-- **Task B.3**: First-pass AI analysis service (`backend/app/services/analysis_service.py`).
-  - Orchestration of diff parsing, sanitization, LLM review prompt construction, and pedagogical comment generation.
-  - Tests in `backend/tests/test_analysis_service.py`.
-  - Proposed Commit: `feat(analysis): implement first-pass AI review analysis service`
-- **Task B.4**: Database persistence layer with SQLAlchemy 2 & SQLite (`backend/app/adapters/db_repository.py`).
-  - Repository interface and SQLite implementation for reviews, comments, and audit timestamps.
-  - Tests in `backend/tests/test_db_repository.py`.
-  - Proposed Commit: `feat(db): implement SQLite persistence repository with SQLAlchemy 2`
-- **Milestone B**: Run all backend tests, generate `docs/reports/phase_b_report.md`, STOP for approval.
+  - Commit: `feat(llm): implement structured finding models and mock/openai llm client adapters`
+- **Task BC.3 [COMPLETED]**: Minimal GitHub PR Ingestion (`backend/app/schemas/github.py`, `backend/app/adapters/github_client.py`, `backend/app/services/ingestion.py`).
+  - Strict https://github.com/{owner}/{repo}/pull/{number} URL validation.
+  - Diff character size caps and truncation markers.
+  - Offline recorded fixtures in `backend/tests/fixtures/recorded_github_pr.py` (0 network calls).
+  - Tests in `backend/tests/test_ingestion.py`.
+  - Commit: `feat(ingestion): implement github pull request ingestion with url validation and size caps`
+- **Task BC.4 [NEXT]**: Database persistence layer with SQLAlchemy 2 & SQLite (`backend/app/adapters/db_repository.py`).
+- **Task BC.5 [NEXT]**: First-pass AI analysis & mentor workflow orchestration service (`backend/app/services/review_service.py`).
+- **Task BC.6 [NEXT]**: FastAPI JSON REST API & centralized safe error handling (`backend/app/web/`).
+- **Task BC.7 [NEXT]**: Evaluation harness in `evals/`.
+- **Milestone BC**: Run all tests, lint, audit, generate `docs/reports/PHASE_BC_REPORT.md` (id BC), STOP for approval.
 
 ---
 
