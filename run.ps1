@@ -1,7 +1,7 @@
 # PowerShell script equivalent for make targets on Windows
 param (
     [Parameter(Mandatory=$true, Position=0)]
-    [ValidateSet("test", "lint", "run-api", "run-web", "audit", "help")]
+    [ValidateSet("test", "lint", "run-api", "run-web", "audit", "eval", "help")]
     [string]$Target
 )
 
@@ -75,7 +75,11 @@ switch ($Target) {
             Pop-Location
         }
     }
+    "eval" {
+        Write-Host "Running evaluation benchmark suite..." -ForegroundColor Cyan
+        & $PythonCmd -m evals.runner
+    }
     "help" {
-        Write-Host "Available targets: test, lint, run-api, run-web, audit" -ForegroundColor Cyan
+        Write-Host "Available targets: test, lint, run-api, run-web, audit, eval" -ForegroundColor Cyan
     }
 }

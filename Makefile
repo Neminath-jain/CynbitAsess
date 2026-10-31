@@ -35,3 +35,6 @@ run-web:
 audit:
 	cd backend && $(BANDIT) -r app/ -ll
 	cd backend && $(PIPAUDIT)
+
+eval:
+	$(PYTHON) -m evals.runner

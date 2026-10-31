@@ -42,7 +42,16 @@ jobs:
         run: |
           bandit -r app/ -ll
 
-      - name: Run Pytest
+      - name: Run Pip Audit
+        working-directory: backend
+        run: |
+          pip-audit
+
+      - name: Run Pytest Test Suite
         working-directory: backend
         run: |
           pytest tests/ -v
+
+      - name: Run Evaluation Benchmark
+        run: |
+          python -m evals.runner
