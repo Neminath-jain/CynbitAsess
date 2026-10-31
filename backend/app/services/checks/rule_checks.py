@@ -104,8 +104,9 @@ def run_rule_checks(raw_diff: str) -> list[CheckResult]:
                     )
                 )
 
-            # 2. Hardcoded Secret
-            if any(p in content.lower() for p in SECRET_PATTERNS) and SECRET_VALUE_REGEX.search(content):
+            # 2. Hardcoded Secret (exclude reading from environment variables)
+            is_env_read = any(e in content.lower() for e in ("os.environ", "os.getenv", "getenv("))
+            if not is_env_read and any(p in content.lower() for p in SECRET_PATTERNS) and SECRET_VALUE_REGEX.search(content):
                 results.append(
                     CheckResult(
                         rule_id="SEC_HARDCODED_SECRET",

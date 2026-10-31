@@ -1,0 +1,20 @@
+diff --git a/app/models/account.py b/app/models/account.py
+new file mode 100644
+index 0000000..8888888
+--- /dev/null
++++ b/app/models/account.py
+@@ -0,0 +1,6 @@
++from sqlalchemy import Column, Integer, ForeignKey
++from app.db import Base
++
++class Account(Base):
++    __tablename__ = "accounts"
++    user_id = Column(Integer, ForeignKey("users.id"), index=True)
+diff --git a/tests/test_account.py b/tests/test_account.py
+new file mode 100644
+index 0000000..9999999
+--- /dev/null
++++ b/tests/test_account.py
+@@ -0,0 +1,4 @@
++def test_account_model():
++    assert True

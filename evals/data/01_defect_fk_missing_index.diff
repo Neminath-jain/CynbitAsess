@@ -1,0 +1,20 @@
+diff --git a/app/models/order.py b/app/models/order.py
+new file mode 100644
+index 0000000..1111111
+--- /dev/null
++++ b/app/models/order.py
+@@ -0,0 +1,6 @@
++from sqlalchemy import Column, Integer, ForeignKey
++from app.db import Base
++
++class Order(Base):
++    __tablename__ = "orders"
++    user_id = Column(Integer, ForeignKey("users.id"))
+diff --git a/tests/test_order.py b/tests/test_order.py
+new file mode 100644
+index 0000000..2222222
+--- /dev/null
++++ b/tests/test_order.py
+@@ -0,0 +1,4 @@
++def test_order_creation():
++    assert True

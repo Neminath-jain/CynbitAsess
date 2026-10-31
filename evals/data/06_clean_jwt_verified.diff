@@ -1,0 +1,18 @@
+diff --git a/app/auth/verifier.py b/app/auth/verifier.py
+new file mode 100644
+index 0000000..aaaaaaa
+--- /dev/null
++++ b/app/auth/verifier.py
+@@ -0,0 +1,5 @@
++import jwt
++
++def verify_token(token: str, public_key: str):
++    return jwt.decode(token, public_key, algorithms=["RS256"])
+diff --git a/tests/test_verifier.py b/tests/test_verifier.py
+new file mode 100644
+index 0000000..bbbbbbb
+--- /dev/null
++++ b/tests/test_verifier.py
+@@ -0,0 +1,4 @@
++def test_verify_token():
++    assert True

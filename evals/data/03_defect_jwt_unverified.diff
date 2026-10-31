@@ -1,0 +1,18 @@
+diff --git a/app/auth/tokens.py b/app/auth/tokens.py
+new file mode 100644
+index 0000000..5555555
+--- /dev/null
++++ b/app/auth/tokens.py
+@@ -0,0 +1,5 @@
++import jwt
++
++def decode_intern_token(token: str):
++    return jwt.decode(token, verify=False)
+diff --git a/tests/test_tokens.py b/tests/test_tokens.py
+new file mode 100644
+index 0000000..6666666
+--- /dev/null
++++ b/tests/test_tokens.py
+@@ -0,0 +1,4 @@
++def test_decode_token():
++    assert True

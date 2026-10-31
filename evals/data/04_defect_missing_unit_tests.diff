@@ -1,0 +1,10 @@
+diff --git a/app/services/checkout.py b/app/services/checkout.py
+new file mode 100644
+index 0000000..7777777
+--- /dev/null
++++ b/app/services/checkout.py
+@@ -0,0 +1,5 @@
++def finalize_checkout(cart_id: str):
++    # Critical business logic without tests
++    total = 100.0
++    return {"cart_id": cart_id, "total": total}
