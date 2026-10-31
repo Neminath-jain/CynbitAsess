@@ -48,10 +48,22 @@
   - Offline recorded fixtures in `backend/tests/fixtures/recorded_github_pr.py` (0 network calls).
   - Tests in `backend/tests/test_ingestion.py`.
   - Commit: `feat(ingestion): implement github pull request ingestion with url validation and size caps`
-- **Task BC.4 [NEXT]**: Database persistence layer with SQLAlchemy 2 & SQLite (`backend/app/adapters/db_repository.py`).
-- **Task BC.5 [NEXT]**: First-pass AI analysis & mentor workflow orchestration service (`backend/app/services/review_service.py`).
-- **Task BC.6 [NEXT]**: FastAPI JSON REST API & centralized safe error handling (`backend/app/web/`).
-- **Task BC.7 [NEXT]**: Evaluation harness in `evals/`.
+- **Task BC.4 [COMPLETED]**: Database persistence layer with SQLAlchemy 2 & SQLite (`backend/app/adapters/db/`).
+  - Synchronous SQLite sessions, foreign keys enabled (`PRAGMA foreign_keys=ON;`).
+  - `ReviewRecord` with telemetry (provider, model, latency_ms, tokens, est_cost).
+  - `FindingRecord` with index on `review_id`.
+  - `DecisionRecord` with unique `finding_id` storing original text alongside edited text.
+  - Commit: `feat(db): implement sqlite persistence with sqlalchemy 2 for review, finding, and decision`
+- **Task BC.5 [COMPLETED]**: First-pass AI analysis & review orchestration service (`backend/app/services/review_service.py`).
+  - Pipeline: Ingest -> Sanitize -> Rule Checks -> LLM Analysis -> Schema Validation -> Verify Evidence -> SQLite Persistence.
+  - Commit: `feat(review): implement review orchestration pipeline connecting ingestion, sanitizer, llm, and persistence`
+- **Task BC.6 [COMPLETED]**: FastAPI REST API endpoints & mentor authorization (`backend/app/web/`).
+  - `POST /api/v1/reviews`, `GET /api/v1/reviews`, `GET /api/v1/reviews/{id}`.
+  - `POST /api/v1/findings/{id}/decision` (approve, edit, reject) with constant-time mentor token validation.
+  - `GET /api/v1/reviews/{id}/export` (markdown containing approved comments only).
+  - Request correlation with `X-Request-ID` middleware; central safe exception handler with `error_id`.
+  - Commit: `feat(api): implement fastapi review endpoints, mentor auth, and markdown export`
+- **Task BC.7 [NEXT]**: Evaluation harness and benchmark runner in `evals/`.
 - **Milestone BC**: Run all tests, lint, audit, generate `docs/reports/PHASE_BC_REPORT.md` (id BC), STOP for approval.
 
 ---
