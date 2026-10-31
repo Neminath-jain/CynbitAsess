@@ -7,31 +7,54 @@ param (
 
 $ErrorActionPreference = "Stop"
 
+$Root = Split-Path -Parent $MyInvocation.MyCommand.Path
+$VenvPython = Join-Path $Root ".venv\Scripts\python.exe"
+
+if (Test-Path $VenvPython) {
+    $PythonCmd = $VenvPython
+    $PytestCmd = Join-Path $Root ".venv\Scripts\pytest.exe"
+    $RuffCmd = Join-Path $Root ".venv\Scripts\ruff.exe"
+    $MypyCmd = Join-Path $Root ".venv\Scripts\mypy.exe"
+    $BanditCmd = Join-Path $Root ".venv\Scripts\bandit.exe"
+    $PipAuditCmd = Join-Path $Root ".venv\Scripts\pip-audit.exe"
+    $UvicornCmd = Join-Path $Root ".venv\Scripts\uvicorn.exe"
+} else {
+    $PythonCmd = "python"
+    $PytestCmd = "pytest"
+    $RuffCmd = "ruff"
+    $MypyCmd = "mypy"
+    $BanditCmd = "bandit"
+    $PipAuditCmd = "pip-audit"
+    $UvicornCmd = "uvicorn"
+}
+
 switch ($Target) {
     "test" {
         Write-Host "Running backend test suite..." -ForegroundColor Cyan
-        Push-Location backend
+        Push-Location "$Root\backend"
         try {
-            python -m pytest tests/ -v
+            & $PytestCmd tests/ -v
         } finally {
             Pop-Location
         }
     }
     "lint" {
         Write-Host "Running ruff check and mypy type checks..." -ForegroundColor Cyan
-        Push-Location backend
+        Push-Location "$Root\backend"
         try {
-            python -m ruff check app/
-            python -m mypy app/
+            Write-Host "--> Running ruff check app/..." -ForegroundColor Yellow
+            & $RuffCmd check app/
+            Write-Host "--> Running mypy app/..." -ForegroundColor Yellow
+            & $MypyCmd app/
         } finally {
             Pop-Location
         }
     }
     "run-api" {
         Write-Host "Starting FastAPI server on http://localhost:8000..." -ForegroundColor Cyan
-        Push-Location backend
+        Push-Location "$Root\backend"
         try {
-            python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+            & $UvicornCmd app.main:app --host 0.0.0.0 --port 8000 --reload
         } finally {
             Pop-Location
         }
@@ -42,10 +65,12 @@ switch ($Target) {
     }
     "audit" {
         Write-Host "Running bandit security scan and pip-audit..." -ForegroundColor Cyan
-        Push-Location backend
+        Push-Location "$Root\backend"
         try {
-            python -m bandit -r app/ -ll
-            python -m pip_audit
+            Write-Host "--> Running bandit -r app/ -ll..." -ForegroundColor Yellow
+            & $BanditCmd -r app/ -ll
+            Write-Host "--> Running pip-audit..." -ForegroundColor Yellow
+            & $PipAuditCmd
         } finally {
             Pop-Location
         }

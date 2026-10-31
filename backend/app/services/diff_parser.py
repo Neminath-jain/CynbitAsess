@@ -3,11 +3,11 @@
 Parses raw unified diffs into structured file hunks and computes precise line numbers
 for new/modified code. Adheres to safety limits to prevent denial of service.
 """
-import re
-from typing import List, Optional
 import logging
-from app.schemas.diff import DiffLine, DiffHunk, FileDiff, ParsedDiff
+import re
+
 from app.config import get_settings
+from app.schemas.diff import DiffHunk, DiffLine, FileDiff, ParsedDiff
 
 logger = logging.getLogger(__name__)
 
@@ -18,7 +18,7 @@ DIFF_GIT_PATTERN = re.compile(r"^diff --git a/(.*) b/(.*)$")
 class DiffParserService:
     """Service to parse, validate, and line-map unified Git diffs."""
 
-    def __init__(self, max_chars: Optional[int] = None, max_files: Optional[int] = None) -> None:
+    def __init__(self, max_chars: int | None = None, max_files: int | None = None) -> None:
         settings = get_settings()
         self.max_chars = max_chars or settings.MAX_DIFF_CHARACTERS
         self.max_files = max_files or settings.MAX_DIFF_FILES
@@ -41,11 +41,11 @@ class DiffParserService:
                 effective_diff = effective_diff[:last_newline]
             is_truncated = True
 
-        files: List[FileDiff] = []
+        files: list[FileDiff] = []
         raw_lines = effective_diff.splitlines()
 
-        current_file: Optional[FileDiff] = None
-        current_hunk: Optional[DiffHunk] = None
+        current_file: FileDiff | None = None
+        current_hunk: DiffHunk | None = None
         current_old_line: int = 0
         current_new_line: int = 0
 
@@ -165,7 +165,7 @@ class DiffParserService:
             is_truncated=is_truncated,
         )
 
-    def _finalize_file(self, current_file: FileDiff, current_hunk: Optional[DiffHunk]) -> None:
+    def _finalize_file(self, current_file: FileDiff, current_hunk: DiffHunk | None) -> None:
         """Attach trailing hunk to file."""
         if current_hunk:
             current_file.hunks.append(current_hunk)

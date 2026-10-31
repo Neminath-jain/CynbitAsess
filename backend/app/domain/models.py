@@ -2,15 +2,16 @@
 
 All entities are immutable-by-default or controlled via explicit domain transition methods.
 """
-from datetime import datetime, timezone
-from enum import Enum
-from typing import Optional, List
 import uuid
-from pydantic import BaseModel, Field, ConfigDict
+from datetime import UTC, datetime
+from enum import StrEnum
+
+from pydantic import BaseModel, ConfigDict, Field
+
 from app.domain.exceptions import InvalidStateTransitionError
 
 
-class ReviewStatus(str, Enum):
+class ReviewStatus(StrEnum):
     """Lifecycle statuses for a Pull Request review."""
     DRAFT = "DRAFT"
     PENDING_APPROVAL = "PENDING_APPROVAL"
@@ -21,7 +22,7 @@ class ReviewStatus(str, Enum):
     FAILED = "FAILED"
 
 
-class CommentStatus(str, Enum):
+class CommentStatus(StrEnum):
     """Lifecycle statuses for an individual review comment."""
     PENDING = "PENDING"
     APPROVED = "APPROVED"
@@ -29,7 +30,7 @@ class CommentStatus(str, Enum):
     PUBLISHED = "PUBLISHED"
 
 
-class CommentCategory(str, Enum):
+class CommentCategory(StrEnum):
     """Pedagogical and technical categories for review comments."""
     BUG = "BUG"
     SECURITY = "SECURITY"
@@ -38,7 +39,7 @@ class CommentCategory(str, Enum):
     PEDAGOGY = "PEDAGOGY"
 
 
-class CommentSeverity(str, Enum):
+class CommentSeverity(StrEnum):
     """Severity levels for review comments."""
     CRITICAL = "CRITICAL"
     WARNING = "WARNING"
@@ -48,7 +49,7 @@ class CommentSeverity(str, Enum):
 
 def get_current_utc_time() -> datetime:
     """Return timezone-aware current UTC datetime."""
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 class ReviewComment(BaseModel):
@@ -60,21 +61,21 @@ class ReviewComment(BaseModel):
     review_id: str
     file_path: str
     line_number: int = Field(ge=1)
-    diff_hunk: Optional[str] = None
+    diff_hunk: str | None = None
     category: CommentCategory
     severity: CommentSeverity
     title: str = Field(min_length=3, max_length=120)
     issue: str = Field(min_length=5)
     why_it_matters: str = Field(min_length=5)
     suggested_fix: str = Field(min_length=1)
-    learning_resource: Optional[str] = None
+    learning_resource: str | None = None
     status: CommentStatus = CommentStatus.PENDING
-    mentor_notes: Optional[str] = None
+    mentor_notes: str | None = None
     is_mentor_edited: bool = False
     created_at: datetime = Field(default_factory=get_current_utc_time)
     updated_at: datetime = Field(default_factory=get_current_utc_time)
 
-    def approve(self, mentor_notes: Optional[str] = None) -> None:
+    def approve(self, mentor_notes: str | None = None) -> None:
         """Approve the comment for publication to the intern."""
         if self.status == CommentStatus.PUBLISHED:
             raise InvalidStateTransitionError("Cannot approve an already published comment.")
@@ -83,7 +84,7 @@ class ReviewComment(BaseModel):
             self.mentor_notes = mentor_notes
         self.updated_at = get_current_utc_time()
 
-    def reject(self, mentor_notes: Optional[str] = None) -> None:
+    def reject(self, mentor_notes: str | None = None) -> None:
         """Reject the comment so it is never published."""
         if self.status == CommentStatus.PUBLISHED:
             raise InvalidStateTransitionError("Cannot reject an already published comment.")
@@ -94,13 +95,13 @@ class ReviewComment(BaseModel):
 
     def edit(
         self,
-        title: Optional[str] = None,
-        issue: Optional[str] = None,
-        why_it_matters: Optional[str] = None,
-        suggested_fix: Optional[str] = None,
-        severity: Optional[CommentSeverity] = None,
-        category: Optional[CommentCategory] = None,
-        mentor_notes: Optional[str] = None,
+        title: str | None = None,
+        issue: str | None = None,
+        why_it_matters: str | None = None,
+        suggested_fix: str | None = None,
+        severity: CommentSeverity | None = None,
+        category: CommentCategory | None = None,
+        mentor_notes: str | None = None,
     ) -> None:
         """Apply mentor edits to the comment content before approval."""
         if self.status == CommentStatus.PUBLISHED:
@@ -164,27 +165,27 @@ class PRReview(BaseModel):
     head_commit_sha: str
     status: ReviewStatus = ReviewStatus.PENDING_APPROVAL
     summary: str = ""
-    comments: List[ReviewComment] = Field(default_factory=list)
+    comments: list[ReviewComment] = Field(default_factory=list)
     total_files_analyzed: int = 0
-    raw_llm_response: Optional[str] = None
-    mentor_id: Optional[str] = None
+    raw_llm_response: str | None = None
+    mentor_id: str | None = None
     created_at: datetime = Field(default_factory=get_current_utc_time)
     updated_at: datetime = Field(default_factory=get_current_utc_time)
-    published_at: Optional[datetime] = None
+    published_at: datetime | None = None
 
-    def approve_comment(self, comment_id: str, mentor_notes: Optional[str] = None) -> None:
+    def approve_comment(self, comment_id: str, mentor_notes: str | None = None) -> None:
         """Approve an individual comment by ID."""
         comment = self.get_comment(comment_id)
         comment.approve(mentor_notes)
         self._sync_review_status()
 
-    def reject_comment(self, comment_id: str, mentor_notes: Optional[str] = None) -> None:
+    def reject_comment(self, comment_id: str, mentor_notes: str | None = None) -> None:
         """Reject an individual comment by ID."""
         comment = self.get_comment(comment_id)
         comment.reject(mentor_notes)
         self._sync_review_status()
 
-    def approve_all(self, mentor_id: Optional[str] = None) -> None:
+    def approve_all(self, mentor_id: str | None = None) -> None:
         """Batch approve all pending comments in the review."""
         if mentor_id:
             self.mentor_id = mentor_id
@@ -193,7 +194,7 @@ class PRReview(BaseModel):
                 comment.approve()
         self._sync_review_status()
 
-    def reject_all(self, mentor_id: Optional[str] = None) -> None:
+    def reject_all(self, mentor_id: str | None = None) -> None:
         """Batch reject all pending comments in the review."""
         if mentor_id:
             self.mentor_id = mentor_id
@@ -209,7 +210,7 @@ class PRReview(BaseModel):
                 return c
         raise InvalidStateTransitionError(f"Comment with id '{comment_id}' not found in review '{self.id}'.")
 
-    def get_approved_comments(self) -> List[ReviewComment]:
+    def get_approved_comments(self) -> list[ReviewComment]:
         """Return list of comments approved for publishing."""
         return [c for c in self.comments if c.status == CommentStatus.APPROVED]
 

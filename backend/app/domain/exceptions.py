@@ -2,14 +2,13 @@
 
 Ensures structured, safe error reporting across all layers.
 """
-from typing import Optional
 import uuid
 
 
 class AppError(Exception):
     """Base application exception with safe public error message and tracing ID."""
 
-    def __init__(self, message: str, error_id: Optional[str] = None) -> None:
+    def __init__(self, message: str, error_id: str | None = None) -> None:
         super().__init__(message)
         self.message = message
         self.error_id = error_id or str(uuid.uuid4())

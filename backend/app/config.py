@@ -5,6 +5,7 @@ Secrets are never hardcoded and must be provided via the environment.
 """
 from functools import lru_cache
 from typing import Literal
+
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -22,7 +23,7 @@ class Settings(BaseSettings):
     # Application Core
     APP_ENV: Literal["development", "testing", "production"] = "development"
     APP_PORT: int = Field(default=8000, ge=1, le=65535)
-    APP_HOST: str = "0.0.0.0"
+    APP_HOST: str = "127.0.0.1"
     DEBUG: bool = False
     SECRET_KEY: str = Field(
         default="change-this-in-production-to-a-secure-random-string",

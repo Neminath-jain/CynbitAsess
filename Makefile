@@ -1,7 +1,14 @@
 # BitElevate PR Review Copilot - Command Automation
 .PHONY: test lint run-api run-web audit help
 
-PYTHON ?= python
+VENV_BIN := $(shell if [ -d ".venv/bin" ]; then echo ".venv/bin/"; elif [ -d ".venv/Scripts" ]; then echo ".venv/Scripts/"; else echo ""; fi)
+PYTHON ?= $(VENV_BIN)python
+PYTEST ?= $(VENV_BIN)pytest
+RUFF ?= $(VENV_BIN)ruff
+MYPY ?= $(VENV_BIN)mypy
+BANDIT ?= $(VENV_BIN)bandit
+PIPAUDIT ?= $(VENV_BIN)pip-audit
+UVICORN ?= $(VENV_BIN)uvicorn
 
 help:
 	@echo "Available commands:"
@@ -12,19 +19,19 @@ help:
 	@echo "  make audit     - Run bandit security scan and dependency vulnerability audit"
 
 test:
-	cd backend && $(PYTHON) -m pytest tests/ -v
+	cd backend && $(PYTEST) tests/ -v
 
 lint:
-	cd backend && $(PYTHON) -m ruff check app/
-	cd backend && $(PYTHON) -m mypy app/
+	cd backend && $(RUFF) check app/
+	cd backend && $(MYPY) app/
 
 run-api:
-	cd backend && $(PYTHON) -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+	cd backend && $(UVICORN) app.main:app --host 0.0.0.0 --port 8000 --reload
 
 run-web:
 	@echo "[UI HOLD] Frontend development is currently on hold pending UI design direction."
 	@echo "Target stack: React 18 + Vite + TypeScript + TanStack Query."
 
 audit:
-	cd backend && $(PYTHON) -m bandit -r app/ -ll
-	cd backend && $(PYTHON) -m pip_audit
+	cd backend && $(BANDIT) -r app/ -ll
+	cd backend && $(PIPAUDIT)
