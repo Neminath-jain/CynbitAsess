@@ -48,6 +48,12 @@ venv.bak/
 .coverage
 htmlcov/
 
+# Node / Frontend
+node_modules/
+frontend/node_modules/
+dist/
+frontend/dist/
+
 # Antigravity & OS files
 .DS_Store
 Thumbs.db

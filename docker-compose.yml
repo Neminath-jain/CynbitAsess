@@ -25,16 +25,16 @@ services:
       retries: 3
       start_period: 10s
 
-  # Frontend service: on hold per project guidelines (UI HOLD)
-  # To be activated upon delivery of UI design direction in Phase D
-  # frontend:
-  #   build:
-  #     context: ./frontend
-  #     dockerfile: Dockerfile
-  #   ports:
-  #     - "3000:3000"
-  #   depends_on:
-  #     - backend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: bitelevate-copilot-frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
 
 volumes:
   copilot-data:

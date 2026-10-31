@@ -29,8 +29,10 @@ run-api:
 	cd backend && $(UVICORN) app.main:app --host 0.0.0.0 --port 8000 --reload
 
 run-web:
-	@echo "[UI HOLD] Frontend development is currently on hold pending UI design direction."
-	@echo "Target stack: React 18 + Vite + TypeScript + TanStack Query."
+	cd frontend && npm run dev
+
+test-web:
+	cd frontend && npm test
 
 audit:
 	cd backend && $(BANDIT) -r app/ -ll

@@ -73,6 +73,7 @@ def _to_review_response(r: ReviewRecord) -> ReviewResponse:
         head_commit_sha=r.head_commit_sha,
         status=r.status,
         summary=r.summary,
+        raw_diff=r.raw_diff or "",
         is_truncated=r.is_truncated,
         provider=r.provider,
         model=r.model,

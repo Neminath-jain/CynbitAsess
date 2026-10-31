@@ -1,0 +1,845 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "BitElevate PR Review Copilot",
+    "description": "AI first-pass pull request review and human mentor triage engine.",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/api/v1/reviews": {
+      "post": {
+        "tags": [
+          "Reviews & Mentor Triage"
+        ],
+        "summary": "Trigger code review for a GitHub PR",
+        "description": "Ingest, analyze, verify evidence, and persist an AI review for the given pull request.",
+        "operationId": "create_review",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReviewCreateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReviewResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Reviews & Mentor Triage"
+        ],
+        "summary": "List code reviews with optional status filter",
+        "description": "Retrieve a list of past pull request reviews.",
+        "operationId": "list_reviews",
+        "parameters": [
+          {
+            "name": "skip",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Offset for pagination",
+              "default": 0,
+              "title": "Skip"
+            },
+            "description": "Offset for pagination"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "description": "Page limit",
+              "default": 50,
+              "title": "Limit"
+            },
+            "description": "Page limit"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by review status (e.g. PENDING_APPROVAL, APPROVED)",
+              "title": "Status"
+            },
+            "description": "Filter by review status (e.g. PENDING_APPROVAL, APPROVED)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ReviewListItemResponse"
+                  },
+                  "title": "Response List Reviews"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/reviews/{id}": {
+      "get": {
+        "tags": [
+          "Reviews & Mentor Triage"
+        ],
+        "summary": "Retrieve detailed review session by ID",
+        "description": "Fetch complete review details, including all generated findings and mentor decisions.",
+        "operationId": "get_review",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReviewResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/findings/{id}/decision": {
+      "post": {
+        "tags": [
+          "Reviews & Mentor Triage"
+        ],
+        "summary": "Submit mentor triage decision for a finding",
+        "description": "Mentor approves, edits, or rejects an AI finding. Updates review aggregate status.",
+        "operationId": "record_finding_decision",
+        "security": [
+          {
+            "APIKeyHeader": []
+          },
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DecisionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DecisionResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/reviews/{id}/export": {
+      "get": {
+        "tags": [
+          "Reviews & Mentor Triage"
+        ],
+        "summary": "Export approved comments as Markdown",
+        "description": "Export approved comments only (omitting pending and rejected comments) as formatted Markdown.",
+        "operationId": "export_review_comments",
+        "security": [
+          {
+            "APIKeyHeader": []
+          },
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Rendered Markdown containing exclusively mentor-approved review comments.",
+            "content": {
+              "text/markdown": {}
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "tags": [
+          "System"
+        ],
+        "summary": "Health Check",
+        "description": "Health check endpoint verifying application operational status.",
+        "operationId": "health_check",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object",
+                  "title": "Response Health Check"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "DecisionRequest": {
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": [
+              "APPROVE",
+              "EDIT",
+              "REJECT"
+            ],
+            "title": "Action",
+            "description": "Mentor decision: APPROVE (keep finding), EDIT (modify finding text/severity), or REJECT (discard finding)"
+          },
+          "mentor_notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mentor Notes",
+            "description": "Optional pedagogical context or coaching notes from the mentor"
+          },
+          "edited_quote": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Edited Quote",
+            "description": "Replacement evidence quote if edited"
+          },
+          "edited_explanation": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Edited Explanation",
+            "description": "Replacement explanation text if edited"
+          },
+          "edited_suggested_fix": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Edited Suggested Fix",
+            "description": "Replacement suggested remediation code if edited"
+          },
+          "edited_severity": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Edited Severity",
+            "description": "Modified severity level (blocker, major, minor, nit) if edited"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "action"
+        ],
+        "title": "DecisionRequest",
+        "description": "Payload submitted by a human mentor to triage a review finding."
+      },
+      "DecisionResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "finding_id": {
+            "type": "string",
+            "title": "Finding Id"
+          },
+          "action": {
+            "type": "string",
+            "title": "Action"
+          },
+          "original_quote": {
+            "type": "string",
+            "title": "Original Quote"
+          },
+          "original_explanation": {
+            "type": "string",
+            "title": "Original Explanation"
+          },
+          "original_suggested_fix": {
+            "type": "string",
+            "title": "Original Suggested Fix"
+          },
+          "original_severity": {
+            "type": "string",
+            "title": "Original Severity"
+          },
+          "edited_quote": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Edited Quote"
+          },
+          "edited_explanation": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Edited Explanation"
+          },
+          "edited_suggested_fix": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Edited Suggested Fix"
+          },
+          "edited_severity": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Edited Severity"
+          },
+          "mentor_notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mentor Notes"
+          },
+          "mentor_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mentor Id"
+          },
+          "decided_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Decided At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "finding_id",
+          "action",
+          "original_quote",
+          "original_explanation",
+          "original_suggested_fix",
+          "original_severity",
+          "decided_at"
+        ],
+        "title": "DecisionResponse",
+        "description": "Response model representing a recorded mentor triage decision."
+      },
+      "FindingResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "review_id": {
+            "type": "string",
+            "title": "Review Id"
+          },
+          "rule_id": {
+            "type": "string",
+            "title": "Rule Id"
+          },
+          "severity": {
+            "type": "string",
+            "title": "Severity"
+          },
+          "file": {
+            "type": "string",
+            "title": "File"
+          },
+          "line_start": {
+            "type": "integer",
+            "title": "Line Start"
+          },
+          "line_end": {
+            "type": "integer",
+            "title": "Line End"
+          },
+          "evidence_quote": {
+            "type": "string",
+            "title": "Evidence Quote"
+          },
+          "explanation": {
+            "type": "string",
+            "title": "Explanation"
+          },
+          "suggested_fix": {
+            "type": "string",
+            "title": "Suggested Fix"
+          },
+          "confidence": {
+            "type": "number",
+            "title": "Confidence"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "decision": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DecisionResponse"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "review_id",
+          "rule_id",
+          "severity",
+          "file",
+          "line_start",
+          "line_end",
+          "evidence_quote",
+          "explanation",
+          "suggested_fix",
+          "confidence",
+          "created_at"
+        ],
+        "title": "FindingResponse",
+        "description": "Response model representing an individual code finding."
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "ReviewCreateRequest": {
+        "properties": {
+          "pr_url": {
+            "type": "string",
+            "title": "Pr Url",
+            "description": "Public GitHub pull request URL (e.g. https://github.com/owner/repo/pull/123)",
+            "examples": [
+              "https://github.com/cynbit/bitelevate-sample/pull/42"
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "pr_url"
+        ],
+        "title": "ReviewCreateRequest",
+        "description": "Payload for initiating a new pull request review."
+      },
+      "ReviewListItemResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "repo_full_name": {
+            "type": "string",
+            "title": "Repo Full Name"
+          },
+          "pr_number": {
+            "type": "integer",
+            "title": "Pr Number"
+          },
+          "pr_title": {
+            "type": "string",
+            "title": "Pr Title"
+          },
+          "author_username": {
+            "type": "string",
+            "title": "Author Username"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "provider": {
+            "type": "string",
+            "title": "Provider"
+          },
+          "model": {
+            "type": "string",
+            "title": "Model"
+          },
+          "findings_count": {
+            "type": "integer",
+            "title": "Findings Count"
+          },
+          "approved_count": {
+            "type": "integer",
+            "title": "Approved Count"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "repo_full_name",
+          "pr_number",
+          "pr_title",
+          "author_username",
+          "status",
+          "provider",
+          "model",
+          "findings_count",
+          "approved_count",
+          "created_at"
+        ],
+        "title": "ReviewListItemResponse",
+        "description": "Summary model for review catalog listing."
+      },
+      "ReviewResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "repo_full_name": {
+            "type": "string",
+            "title": "Repo Full Name"
+          },
+          "pr_number": {
+            "type": "integer",
+            "title": "Pr Number"
+          },
+          "pr_title": {
+            "type": "string",
+            "title": "Pr Title"
+          },
+          "pr_description": {
+            "type": "string",
+            "title": "Pr Description"
+          },
+          "author_username": {
+            "type": "string",
+            "title": "Author Username"
+          },
+          "base_commit_sha": {
+            "type": "string",
+            "title": "Base Commit Sha"
+          },
+          "head_commit_sha": {
+            "type": "string",
+            "title": "Head Commit Sha"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "summary": {
+            "type": "string",
+            "title": "Summary"
+          },
+          "raw_diff": {
+            "type": "string",
+            "title": "Raw Diff",
+            "default": ""
+          },
+          "is_truncated": {
+            "type": "boolean",
+            "title": "Is Truncated"
+          },
+          "provider": {
+            "type": "string",
+            "title": "Provider"
+          },
+          "model": {
+            "type": "string",
+            "title": "Model"
+          },
+          "latency_ms": {
+            "type": "integer",
+            "title": "Latency Ms"
+          },
+          "tokens": {
+            "type": "integer",
+            "title": "Tokens"
+          },
+          "est_cost": {
+            "type": "number",
+            "title": "Est Cost"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          },
+          "findings": {
+            "items": {
+              "$ref": "#/components/schemas/FindingResponse"
+            },
+            "type": "array",
+            "title": "Findings"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "repo_full_name",
+          "pr_number",
+          "pr_title",
+          "pr_description",
+          "author_username",
+          "base_commit_sha",
+          "head_commit_sha",
+          "status",
+          "summary",
+          "is_truncated",
+          "provider",
+          "model",
+          "latency_ms",
+          "tokens",
+          "est_cost",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "ReviewResponse",
+        "description": "Detailed response model for a pull request review session."
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      }
+    },
+    "securitySchemes": {
+      "APIKeyHeader": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-Mentor-Token"
+      },
+      "HTTPBearer": {
+        "type": "http",
+        "scheme": "bearer"
+      }
+    }
+  }
+}

@@ -104,6 +104,7 @@ class ReviewResponse(BaseModel):
     head_commit_sha: str
     status: str
     summary: str
+    raw_diff: str = ""
     is_truncated: bool
     provider: str
     model: str

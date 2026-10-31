@@ -60,8 +60,13 @@ switch ($Target) {
         }
     }
     "run-web" {
-        Write-Host "[UI HOLD] Frontend development is on hold pending UI design direction." -ForegroundColor Yellow
-        Write-Host "Target stack: React 18 + Vite + TypeScript + TanStack Query." -ForegroundColor Yellow
+        Write-Host "Starting Vite frontend dev server on http://localhost:5173..." -ForegroundColor Cyan
+        Push-Location "$Root\frontend"
+        try {
+            npm run dev
+        } finally {
+            Pop-Location
+        }
     }
     "audit" {
         Write-Host "Running bandit security scan and pip-audit..." -ForegroundColor Cyan
