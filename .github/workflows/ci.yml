@@ -1,0 +1,48 @@
+name: CI
+
+on:
+  push:
+    branches: [ master, main ]
+  pull_request:
+    branches: [ master, main ]
+
+jobs:
+  backend-quality:
+    name: Backend Lint, Audit & Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install dependencies
+        working-directory: backend
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run Ruff Lint
+        working-directory: backend
+        run: |
+          ruff check app/
+
+      - name: Run Mypy Type Check
+        working-directory: backend
+        run: |
+          mypy app/
+
+      - name: Run Bandit Security Audit
+        working-directory: backend
+        run: |
+          bandit -r app/ -ll
+
+      - name: Run Pytest
+        working-directory: backend
+        run: |
+          pytest tests/ -v
