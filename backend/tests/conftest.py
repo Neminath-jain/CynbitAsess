@@ -7,6 +7,8 @@ import os
 @pytest.fixture(autouse=True)
 def setup_test_env() -> Generator[None, None, None]:
     """Ensure safe testing environment variables."""
+    from app.config import get_settings
+    get_settings.cache_clear()
     old_env = os.environ.copy()
     os.environ["APP_ENV"] = "testing"
     os.environ["DATABASE_URL"] = "sqlite:///:memory:"
@@ -14,9 +16,11 @@ def setup_test_env() -> Generator[None, None, None]:
     os.environ["LLM_API_KEY"] = "test-mock-key"
     os.environ["GITHUB_TOKEN"] = "test-github-token"
     os.environ["GITHUB_WEBHOOK_SECRET"] = "test-webhook-secret"
+    get_settings.cache_clear()
     yield
     os.environ.clear()
     os.environ.update(old_env)
+    get_settings.cache_clear()
 
 
 @pytest.fixture

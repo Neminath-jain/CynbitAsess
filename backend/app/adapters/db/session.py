@@ -18,10 +18,17 @@ class DatabaseManager:
         # Enable check_same_thread=False for SQLite
         connect_args = {"check_same_thread": False} if db_url.startswith("sqlite") else {}
 
+        engine_kwargs: dict[str, object] = {
+            "connect_args": connect_args,
+            "echo": self.settings.DEBUG,
+        }
+        if db_url in ("sqlite:///:memory:", "sqlite://") or ":memory:" in db_url:
+            from sqlalchemy.pool import StaticPool
+            engine_kwargs["poolclass"] = StaticPool
+
         self.engine: Engine = create_engine(
             db_url,
-            connect_args=connect_args,
-            echo=self.settings.DEBUG,
+            **engine_kwargs,
         )
 
         # Enforce foreign key constraints for SQLite

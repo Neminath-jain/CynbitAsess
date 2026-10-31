@@ -29,6 +29,10 @@ class Settings(BaseSettings):
         default="change-this-in-production-to-a-secure-random-string",
         min_length=16,
     )
+    MENTOR_TOKEN: str = Field(
+        default="test-mentor-token",
+        description="Shared secret or bearer token required for mentor authentication",
+    )
 
     # Persistence
     DATABASE_URL: str = "sqlite:///./bitelevate_copilot.db"
